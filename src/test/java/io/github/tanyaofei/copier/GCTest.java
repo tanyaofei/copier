@@ -17,7 +17,7 @@ public class GCTest extends Assertions {
         Thread.sleep(300);
 
         assertTrue(Copiers.COPIERS.isEmpty());
-        assertTrue(CopierGenerator.CACHE.isEmpty());
+        assertTrue(Generator.CACHE.isEmpty());
     }
 
 

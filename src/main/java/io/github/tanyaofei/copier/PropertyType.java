@@ -5,6 +5,9 @@ import jakarta.annotation.Nonnull;
 import java.lang.reflect.Type;
 
 /**
+ * @param type        Java Type
+ * @param asmType     ASM Type
+ * @param genericType Java Generic Type
  * @author tanyaofei
  * @since 2025/6/19
  **/

@@ -47,11 +47,11 @@ public abstract class Copier {
     public static Copier create(@Nonnull Class<?> sourceClass, @Nonnull Class<?> targetClass, boolean useConverter, @Nonnull MethodHandles.Lookup lookup) {
         try {
             if (targetClass.isRecord()) {
-                var gen = new AllArgsConstructorCopierGenerator(sourceClass, targetClass, useConverter, lookup);
+                var gen = new AllArgsConstructorGenerator(sourceClass, targetClass, useConverter, lookup);
                 return gen.create();
             } else if (hasNoArgsConstructor(targetClass)) {
                 // 非 Record 类型必须提供无参数构造器以满足 "copy() -> copyInto()" 方法
-                var gen = new NoArgsConstructorCopierGenerator(sourceClass, targetClass, useConverter, lookup);
+                var gen = new NoArgsConstructorGenerator(sourceClass, targetClass, useConverter, lookup);
                 return gen.create();
             }
         } catch (Exception e) {

@@ -9,8 +9,8 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 
 /**
- * @param name   属性名称
- * @param type   属性类型
+ * @param name   Property Name
+ * @param type   Property Type
  * @param method Getter/Setter
  * @author tanyaofei
  * @since 2025/6/19

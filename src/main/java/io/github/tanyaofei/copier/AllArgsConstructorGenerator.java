@@ -15,9 +15,9 @@ import java.util.stream.Collectors;
  * @author tanyaofei
  * @since 2025/6/19
  **/
-class AllArgsConstructorCopierGenerator extends CopierGenerator {
+class AllArgsConstructorGenerator extends Generator {
 
-    public AllArgsConstructorCopierGenerator(@Nonnull Class<?> source, @Nonnull Class<?> target, boolean useConverter, @Nonnull MethodHandles.Lookup lookup) {
+    public AllArgsConstructorGenerator(@Nonnull Class<?> source, @Nonnull Class<?> target, boolean useConverter, @Nonnull MethodHandles.Lookup lookup) {
         super(source, target, useConverter, lookup);
     }
 

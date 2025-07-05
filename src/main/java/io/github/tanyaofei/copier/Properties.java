@@ -3,8 +3,8 @@ package io.github.tanyaofei.copier;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 
-import java.util.HashMap;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.BiConsumer;
 
 /**
  * Extra properties
@@ -12,11 +12,19 @@ import java.util.Objects;
  * @author tanyaofei
  * @since 2025/6/19
  **/
-public class Properties extends HashMap<String, Object> {
+public class Properties implements Map<String, Object> {
+
+    private final static Properties EMPTY = new Properties(Collections.emptyMap());
+
+    private final Map<String, Object> delegate;
+
+    private Properties(@Nonnull Map<String, Object> delegate) {
+        this.delegate = delegate;
+    }
 
     @Nonnull
     public static Properties of() {
-        return new Properties();
+        return EMPTY;
     }
 
     @Nonnull
@@ -76,27 +84,105 @@ public class Properties extends HashMap<String, Object> {
         if (kvs.length == 0) {
             return Properties.of();
         }
-        var properties = new Properties();
+
+        var delegate = new HashMap<String, Object>(kvs.length / 2);
         for (var kv : kvs) {
-            properties.put(Objects.requireNonNull(kv.key(), "key"), kv.value());
+            delegate.put(Objects.requireNonNull(kv.key(), "key"), kv.value());
         }
-        return properties;
+        return new Properties(Collections.unmodifiableMap(delegate));
     }
 
     @Nonnull
     private static Properties ofN(@Nonnull Object... kv) {
-        var properties = new Properties();
+        if (kv.length == 0) {
+            return Properties.of();
+        }
+
         int size = kv.length;
+        var delegate = new HashMap<String, Object>(size / 2);
         for (int i = 0; i < size; i += 2) {
             var k = Objects.requireNonNull((String) kv[i], "key");
             var v = kv[i + 1];
-            properties.put(k, v);
+            delegate.put(k, v);
         }
-        return properties;
+        return new Properties(Collections.unmodifiableMap(delegate));
     }
 
     public @Nonnull PropertiesConverter converter() {
         return new PropertiesConverter();
+    }
+
+    @Nonnull
+    @Override
+    public Set<Entry<String, Object>> entrySet() {
+        return this.delegate.entrySet();
+    }
+
+    @Override
+    public Object get(Object key) {
+        return this.delegate.get(key);
+    }
+
+    @Override
+    public Object put(String key, Object value) {
+        return this.delegate.put(key, value);
+    }
+
+    @Override
+    public Object remove(Object key) {
+        return this.delegate.remove(key);
+    }
+
+    @Override
+    public void putAll(@Nonnull Map<? extends String, ?> m) {
+        this.delegate.putAll(m);
+    }
+
+    @Override
+    public void clear() {
+        this.delegate.clear();
+    }
+
+    @Override
+    public Object getOrDefault(Object key, Object defaultValue) {
+        return this.delegate.getOrDefault(key, defaultValue);
+    }
+
+    @Override
+    @Nonnull
+    public Collection<Object> values() {
+        return this.delegate.values();
+    }
+
+    @Override
+    @Nonnull
+    public Set<String> keySet() {
+        return this.delegate.keySet();
+    }
+
+    @Override
+    public boolean containsValue(Object value) {
+        return this.delegate.containsValue(value);
+    }
+
+    @Override
+    public int size() {
+        return this.delegate.size();
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return this.delegate.isEmpty();
+    }
+
+    @Override
+    public boolean containsKey(Object key) {
+        return this.delegate.containsKey(key);
+    }
+
+    @Override
+    public void forEach(BiConsumer<? super String, ? super Object> action) {
+        this.delegate.forEach(action);
     }
 
     public record Property(

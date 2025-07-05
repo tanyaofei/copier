@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author tanyaofei
  * @since 2025/7/1
  **/
-abstract class CopierGenerator {
+abstract class Generator {
 
     private final static String DEBUG_LOCATION = System.getProperty("copier.debugLocation");
 
@@ -30,7 +30,7 @@ abstract class CopierGenerator {
 
     private final static ReferenceQueue<Class<?>> REFERENCE_QUEUE = new ReferenceQueue<>();
 
-    final static HashMap<CacheKey, IdentifierWeakReference<CacheKey, Class<?>>> CACHE = new HashMap<>();
+    final static Map<CacheKey, IdentifierWeakReference<CacheKey, Class<?>>> CACHE = new ConcurrentHashMap<>();
 
     static {
         var cleaner = new Thread(() -> {
@@ -50,21 +50,36 @@ abstract class CopierGenerator {
         cleaner.start();
     }
 
+    /**
+     * source class
+     */
     @Nonnull
     protected final Class<?> source;
 
+    /**
+     * target class
+     */
     @Nonnull
     protected final Class<?> target;
 
+    /**
+     * Whether if using converter
+     */
     protected final boolean useConverter;
 
+    /**
+     * class name without hashcode
+     */
     @Nonnull
     private final String classNamePrefix;
 
+    /**
+     * Lookup instance for defining Copier class
+     */
     @Nonnull
     private final MethodHandles.Lookup lookup;
 
-    public CopierGenerator(@Nonnull Class<?> source, @Nonnull Class<?> target, boolean useConverter, @Nonnull MethodHandles.Lookup lookup) {
+    public Generator(@Nonnull Class<?> source, @Nonnull Class<?> target, boolean useConverter, @Nonnull MethodHandles.Lookup lookup) {
         this.source = source;
         this.target = target;
         this.useConverter = useConverter;
@@ -88,18 +103,32 @@ abstract class CopierGenerator {
         ce.end_class();
     }
 
+    /**
+     * Generate copy method
+     *
+     * @param ce ClassEmitter
+     * @see Copier#copy(Object, Converter)
+     */
     protected abstract void generateCopyMethod(@Nonnull ClassEmitter ce);
 
+    /**
+     * Generate copyInto method
+     *
+     * @param ce ClassEmitter
+     * @see Copier#copyInto(Object, Object, Converter)
+     */
     protected abstract void generateCopyIntoMethod(@Nonnull ClassEmitter ce);
 
+    /**
+     * Generate class and instance
+     *
+     * @return Copier instance
+     */
     @Nonnull
     public Copier create() {
         var key = new CacheKey(this.source, this.target, this.useConverter);
 
-        Class<?> clz;
-        synchronized (CACHE) {
-            clz = getClassFromCache(key);
-        }
+        var clz = getClassFromCache(key);
 
         if (clz == null) {
             synchronized (CACHE) {
@@ -118,6 +147,12 @@ abstract class CopierGenerator {
         }
     }
 
+    /**
+     * Generate class
+     *
+     * @param key cache key
+     * @return Copier class
+     */
     @Nonnull
     protected Class<?> generate(@Nonnull CacheKey key) {
         byte[] bytecode;
@@ -128,7 +163,7 @@ abstract class CopierGenerator {
 
             bytecode = cw.toByteArray();
             if (DEBUG_LOCATION != null && !DEBUG_LOCATION.isEmpty()) {
-                writeClassFile(bytecode);
+                dumpClassFile(bytecode);
             }
         } catch (Exception e) {
             throw CopierException.wrap("Error generating Copier bytecode", e);
@@ -182,7 +217,12 @@ abstract class CopierGenerator {
         };
     }
 
-    private static void writeClassFile(@Nonnull byte[] bytecode) {
+    /**
+     * Dump bytecode to a *.class file
+     *
+     * @param bytecode Java bytecode
+     */
+    private static void dumpClassFile(@Nonnull byte[] bytecode) {
         var reader = new ClassReader(bytecode);
         var className = reader.getClassName();
 
@@ -202,13 +242,11 @@ abstract class CopierGenerator {
 
     @Nullable
     private static Class<?> getClassFromCache(@Nonnull CacheKey key) {
-        synchronized (CACHE) {
-            var ref = CACHE.get(key);
-            if (ref == null) {
-                return null;
-            }
-            return ref.get();
+        var ref = CACHE.get(key);
+        if (ref == null) {
+            return null;
         }
+        return ref.get();
     }
 
 
